@@ -660,7 +660,7 @@ namespace Mirage
 						Console.WriteLine("FindSimilar. Version {0}.", VERSION);
 						ScanDirectory(scanPath, mandelEllisScmsDatabase, repository, skipDurationAboveSeconds, silent);
 					} else {
-						Console.Out.WriteLine("No directory found {0}!", scanPath);
+						Console.Out.WriteLine("No directory found: {0}!", scanPath);
 					}
 				}
 
