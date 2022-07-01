@@ -81,7 +81,7 @@ namespace Soundfingerprinting.DbStorage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS fingerprints"
+			dbcmd.CommandText = "CREATE TABLE  fingerprints"
 				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, trackid INTEGER, songorder INTEGER, totalfingerprints INTEGER, signature BLOB)";
 			
 			try {
@@ -117,7 +117,7 @@ namespace Soundfingerprinting.DbStorage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS hashbins"
+			dbcmd.CommandText = "CREATE TABLE  hashbins"
 				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, hashbin INTEGER, hashtable INTEGER, trackid INTEGER, fingerprintid INTEGER)";
 
 			try {
@@ -153,7 +153,7 @@ namespace Soundfingerprinting.DbStorage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS tracks"
+			dbcmd.CommandText = "CREATE TABLE  tracks"
 				+ " (id INTEGER PRIMARY KEY AUTOINCREMENT, albumid INTEGER, length INTEGER, artist TEXT, title TEXT, filepath TEXT, tags TEXT)";
 
 			try {

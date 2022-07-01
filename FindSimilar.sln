@@ -1,18 +1,41 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-# SharpDevelop 4.1.0.7915
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindSimilar", "FindSimilar.csproj", "{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonUtils", "..\PerivarCommonUtils\Library\CommonUtils.csproj", "{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Debug|x86.Build.0 = Debug|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Debug|Any CPU.Build.0 = Debug|x86
 		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Debug|x86.ActiveCfg = Debug|x86
-		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Release|x86.Build.0 = Release|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Debug|x86.Build.0 = Debug|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Release|Any CPU.ActiveCfg = Release|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Release|Any CPU.Build.0 = Release|x86
 		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Release|x86.ActiveCfg = Release|x86
+		{44D21B2D-BCEA-49D1-8EDA-713E7FA3DABC}.Release|x86.Build.0 = Release|x86
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Debug|x86.Build.0 = Debug|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Release|x86.ActiveCfg = Release|Any CPU
+		{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA44A577-3CD1-4B86-8FE7-EAC86BC617F4}
 	EndGlobalSection
 EndGlobal

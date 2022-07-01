@@ -43,7 +43,7 @@ namespace Mirage
 		#region Constructor and Destructor
 		public Db()
 		{
-			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+			string homedir = @"d:\tmp";
 			string dbdir = Path.Combine(homedir,".mirage");
 			string dbfile = Path.Combine(dbdir, "mirage.db");
 			string sqlite = string.Format("Data Source={0};Version=3", dbfile);
@@ -85,7 +85,7 @@ namespace Mirage
 			lock (dbcon) {
 				dbcmd = dbcon.CreateCommand();
 			}
-			dbcmd.CommandText = "CREATE TABLE IF NOT EXISTS mirage"
+			dbcmd.CommandText = "CREATE TABLE mirage"
 				+ " (trackid INTEGER PRIMARY KEY, audioFeature BLOB, name TEXT, duration INTEGER, bitstring TEXT)";
 			
 			try {

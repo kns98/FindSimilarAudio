@@ -1,6 +1,6 @@
 ﻿using System;
 using CommonUtils;
-using CommonUtils.FFT;
+using FFTW.NET;
 
 // Please feel free to use/modify this class.
 // If you give me credit by keeping this information or
@@ -71,16 +71,30 @@ namespace SpeechRecognitionHMM
 
 		private double[] MagnitudeSpectrum(float[] frame)
 		{
-			// prepare the input arrays
-			FFTW.DoubleArray fftwInput = new FFTW.DoubleArray(MathUtils.FloatToDouble(frame));
-			
 			int complexSize = (frame.Length >> 1) + 1;
-			FFTW.ComplexArray fftwOutput = new FFTW.ComplexArray(complexSize);
-			
-			FFTW.ForwardTransform(fftwInput, fftwOutput);
-			double[] magSpectrum = fftwOutput.Abs;
-			
+
+			using (var pinIn = new PinnedArray<double>(frame))
+			using (var output = new FftwArrayComplex(complexSize))
+			{
+				DFT.FFT(pinIn, output);
+				
+				double[] result = new double[output.Length];
+
+				for (int i = 0; i < output.Length; i++)
+				{
+					result[i] = output[i].Real;
+				}
+
+				return result;
+			}
+
 			/*
+			// prepare the input arrays
+			FFTW.NET.FftwArrayDouble fftwInput = new FFTW.NET.FftwArrayDouble(frame);
+			FFTW.NET.FftwArrayComplex fftwOutput = new FFTW.NET.FftwArrayComplex(complexSize);
+			FFTW.NET.DFT.FFT(fftwInput, fftwOutput);
+			double[] magSpectrum = fftwOutput.Abs;
+		
 			double[] magSpectrum = new double[frame.Length];
 
 			// calculate FFT for current frame
@@ -92,8 +106,9 @@ namespace SpeechRecognitionHMM
 			{
 				magSpectrum[k] = Math.Sqrt(fft.real[k] * fft.real[k] + fft.imag[k] * fft.imag[k]);
 			}
-			 */
+			 
 			return magSpectrum;
+			*/
 		}
 
 		// emphasize high freq signal
