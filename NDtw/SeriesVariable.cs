@@ -1,62 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NDtw.Preprocessing;
+﻿using NDtw.Preprocessing;
 
 namespace NDtw
 {
     public class SeriesVariable
     {
-        private readonly double[] _x;
-        private readonly double[] _y;
-        private readonly string _variableName;
         private readonly IPreprocessor _preprocessor;
-        private readonly double _weight;
 
-        public SeriesVariable(double[] x, double[] y, string variableName = null, IPreprocessor preprocessor = null, double weight = 1)
+        public SeriesVariable(double[] x, double[] y, string variableName = null, IPreprocessor preprocessor = null,
+            double weight = 1)
         {
-            _x = x;
-            _y = y;
-            _variableName = variableName;
+            OriginalXSeries = x;
+            OriginalYSeries = y;
+            VariableName = variableName;
             _preprocessor = preprocessor;
-            _weight = weight;
+            Weight = weight;
         }
 
-        public string VariableName
-        {
-            get { return _variableName; }
-        }
+        public string VariableName { get; }
 
-        public double Weight
-        {
-            get { return _weight; }
-        }
+        public double Weight { get; }
 
-        public double[] OriginalXSeries
-        {
-            get { return _x; }
-        }
+        public double[] OriginalXSeries { get; }
 
-        public double[] OriginalYSeries
-        {
-            get { return _y; }
-        }
+        public double[] OriginalYSeries { get; }
 
         public double[] GetPreprocessedXSeries()
         {
             if (_preprocessor == null)
-                return _x;
+                return OriginalXSeries;
 
-            return _preprocessor.Preprocess(_x);
+            return _preprocessor.Preprocess(OriginalXSeries);
         }
 
         public double[] GetPreprocessedYSeries()
         {
             if (_preprocessor == null)
-                return _y;
+                return OriginalYSeries;
 
-            return _preprocessor.Preprocess(_y);
+            return _preprocessor.Preprocess(OriginalYSeries);
         }
     }
 }

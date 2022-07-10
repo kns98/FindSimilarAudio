@@ -1,7 +1,7 @@
-﻿namespace Soundfingerprinting.Dao.Entities
-{
-    using System;
+﻿using System;
 
+namespace Soundfingerprinting.Dao.Entities
+{
     [Serializable]
     public class HashBin
     {

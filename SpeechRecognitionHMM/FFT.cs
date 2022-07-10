@@ -43,124 +43,117 @@
 // Please visit http:// ocvolume.sourceforge.net.
 namespace SpeechRecognitionHMM
 {
-	// last updated on June 15, 2002<br>
-	// <b>description:</b> FFT class for real signals. Upon entry, N contains the
-	// numbers of points in the DFT, real[] and imaginary[] contain the real and
-	// imaginary parts of the input. Upon return, real[] and imaginary[] contain the
-	// DFT output. All signals run from 0 to N - 1<br>
-	// <b>input:</b> speech signal<br>
-	// <b>output:</b> real and imaginary part of DFT output
-	// @author Danny Su
-	public class FFT
-	{
-		// number of points
-		protected internal int numPoints;
+    // last updated on June 15, 2002<br>
+    // <b>description:</b> FFT class for real signals. Upon entry, N contains the
+    // numbers of points in the DFT, real[] and imaginary[] contain the real and
+    // imaginary parts of the input. Upon return, real[] and imaginary[] contain the
+    // DFT output. All signals run from 0 to N - 1<br>
+    // <b>input:</b> speech signal<br>
+    // <b>output:</b> real and imaginary part of DFT output
+    // @author Danny Su
+    public class FFT
+    {
+        // PI
+        private const double PI = Math.PI;
 
-		// PI
-		const double PI = Math.PI;
+        // imaginary part
+        public float[] imag;
 
-		// real part
-		public float[] real;
-		
-		// imaginary part
-		public float[] imag;
+        // number of points
+        protected internal int numPoints;
 
-		// performs Fast Fourier Transformation<br>
-		// @param signal
-		public virtual void ComputeFFT(float[] signal)
-		{
-			numPoints = signal.Length;
+        // real part
+        public float[] real;
 
-			// initialize real & imag array
-			real = new float[numPoints];
-			imag = new float[numPoints];
+        // performs Fast Fourier Transformation<br>
+        // @param signal
+        public virtual void ComputeFFT(float[] signal)
+        {
+            numPoints = signal.Length;
 
-			// move the N point signal into the real part of the complex DFT's time
-			// domain
-			real = signal;
+            // initialize real & imag array
+            real = new float[numPoints];
+            imag = new float[numPoints];
 
-			// set all of the samples in the imaginary part to zero
-			for (int i = 0; i < imag.Length; i++)
-			{
-				imag[i] = 0;
-			}
-			
-			// perform FFT using the real & imag array
-			DoFFT();
-		}
+            // move the N point signal into the real part of the complex DFT's time
+            // domain
+            real = signal;
 
-		// performs Fast Fourier Transformation<br>
-		private void DoFFT()
-		{
-			if (numPoints == 1)
-			{
-				return;
-			}
+            // set all of the samples in the imaginary part to zero
+            for (var i = 0; i < imag.Length; i++) imag[i] = 0;
 
-			int numStages = (int)(Math.Log(numPoints) / Math.Log(2));
-			int halfNumPoints = numPoints >> 1;
-			int j = halfNumPoints;
+            // perform FFT using the real & imag array
+            DoFFT();
+        }
 
-			// FFT time domain decomposition carried out by "bit reversal sorting"
-			// algorithm
-			int k = 0;
-			for (int i = 1; i < numPoints - 2; i++)
-			{
-				if (i < j)
-				{
-					// swap
-					float tempReal = real[j];
-					float tempImag = imag[j];
-					real[j] = real[i];
-					imag[j] = imag[i];
-					real[i] = tempReal;
-					imag[i] = tempImag;
-				}
-				k = halfNumPoints;
-				while (k <= j)
-				{
-					j -= k;
-					k >>= 1;
-				}
-				j += k;
-			}
+        // performs Fast Fourier Transformation<br>
+        private void DoFFT()
+        {
+            if (numPoints == 1) return;
 
-			// loop for each stage
-			for (int stage = 1; stage <= numStages; stage++)
-			{
-				int LE = 1;
-				for (int i = 0; i < stage; i++)
-				{
-					LE <<= 1;
-				}
-				int LE2 = LE >> 1;
-				double UR = 1;
-				double UI = 0;
-				// calculate sine & cosine values
-				double SR = Math.Cos(PI / LE2);
-				double SI = -Math.Sin(PI / LE2);
-				// loop for each sub DFT
-				for (int subDFT = 1; subDFT <= LE2; subDFT++)
-				{
-					// loop for each butterfly
-					for (int butterfly = subDFT - 1; butterfly <= numPoints - 1; butterfly += LE)
-					{
-						int ip = butterfly + LE2;
-						
-						// butterfly calculation
-						float tempReal = (float)(real[ip] * UR - imag[ip] * UI);
-						float tempImag = (float)(real[ip] * UI + imag[ip] * UR);
-						real[ip] = real[butterfly] - tempReal;
-						imag[ip] = imag[butterfly] - tempImag;
-						real[butterfly] += tempReal;
-						imag[butterfly] += tempImag;
-					}
+            var numStages = (int)(Math.Log(numPoints) / Math.Log(2));
+            var halfNumPoints = numPoints >> 1;
+            var j = halfNumPoints;
 
-					double tempUR = UR;
-					UR = tempUR * SR - UI * SI;
-					UI = tempUR * SI + UI * SR;
-				}
-			}
-		}
-	}
+            // FFT time domain decomposition carried out by "bit reversal sorting"
+            // algorithm
+            var k = 0;
+            for (var i = 1; i < numPoints - 2; i++)
+            {
+                if (i < j)
+                {
+                    // swap
+                    var tempReal = real[j];
+                    var tempImag = imag[j];
+                    real[j] = real[i];
+                    imag[j] = imag[i];
+                    real[i] = tempReal;
+                    imag[i] = tempImag;
+                }
+
+                k = halfNumPoints;
+                while (k <= j)
+                {
+                    j -= k;
+                    k >>= 1;
+                }
+
+                j += k;
+            }
+
+            // loop for each stage
+            for (var stage = 1; stage <= numStages; stage++)
+            {
+                var LE = 1;
+                for (var i = 0; i < stage; i++) LE <<= 1;
+                var LE2 = LE >> 1;
+                double UR = 1;
+                double UI = 0;
+                // calculate sine & cosine values
+                var SR = Math.Cos(PI / LE2);
+                var SI = -Math.Sin(PI / LE2);
+                // loop for each sub DFT
+                for (var subDFT = 1; subDFT <= LE2; subDFT++)
+                {
+                    // loop for each butterfly
+                    for (var butterfly = subDFT - 1; butterfly <= numPoints - 1; butterfly += LE)
+                    {
+                        var ip = butterfly + LE2;
+
+                        // butterfly calculation
+                        var tempReal = (float)(real[ip] * UR - imag[ip] * UI);
+                        var tempImag = (float)(real[ip] * UI + imag[ip] * UR);
+                        real[ip] = real[butterfly] - tempReal;
+                        imag[ip] = imag[butterfly] - tempImag;
+                        real[butterfly] += tempReal;
+                        imag[butterfly] += tempImag;
+                    }
+
+                    var tempUR = UR;
+                    UR = tempUR * SR - UI * SI;
+                    UI = tempUR * SI + UI * SR;
+                }
+            }
+        }
+    }
 }

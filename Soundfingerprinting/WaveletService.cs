@@ -1,7 +1,7 @@
-﻿namespace Soundfingerprinting.Fingerprinting.Wavelets
-{
-    using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
+namespace Soundfingerprinting.Fingerprinting.Wavelets
+{
     public class WaveletService : IWaveletService
     {
         private readonly IWaveletDecomposition waveletDecomposition;
@@ -14,9 +14,7 @@
         public void ApplyWaveletTransformInPlace(List<double[][]> logarithmizedSpectrum)
         {
             foreach (var image in logarithmizedSpectrum)
-            {
-                this.waveletDecomposition.DecomposeImageInPlace(image); /*Compute wavelets*/
-            }
+                waveletDecomposition.DecomposeImageInPlace(image); /*Compute wavelets*/
         }
     }
 }

@@ -39,7 +39,7 @@ namespace FindSimilar
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SplashSceenWaitingForm));
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.lblStatus = new System.Windows.Forms.Label();
-			this.progressBar = new System.Windows.Forms.ProgressBar();
+			this.ProgressBar = new System.Windows.Forms.ProgressBar();
 			this.worker = new System.ComponentModel.BackgroundWorker();
 			this.buttonCancel = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -66,10 +66,10 @@ namespace FindSimilar
 			// 
 			// progressBar
 			// 
-			this.progressBar.Location = new System.Drawing.Point(117, 97);
-			this.progressBar.Name = "progressBar";
-			this.progressBar.Size = new System.Drawing.Size(289, 23);
-			this.progressBar.TabIndex = 4;
+			this.ProgressBar.Location = new System.Drawing.Point(117, 97);
+			this.ProgressBar.Name = "ProgressBar";
+			this.ProgressBar.Size = new System.Drawing.Size(289, 23);
+			this.ProgressBar.TabIndex = 4;
 			// 
 			// worker
 			// 
@@ -96,7 +96,7 @@ namespace FindSimilar
 			this.BackColor = System.Drawing.SystemColors.ControlLightLight;
 			this.ClientSize = new System.Drawing.Size(441, 175);
 			this.Controls.Add(this.buttonCancel);
-			this.Controls.Add(this.progressBar);
+			this.Controls.Add(this.ProgressBar);
 			this.Controls.Add(this.lblStatus);
 			this.Controls.Add(this.pictureBox1);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -109,8 +109,7 @@ namespace FindSimilar
 		}
 		private System.Windows.Forms.Button buttonCancel;
 		private System.ComponentModel.BackgroundWorker worker;
-		private System.Windows.Forms.ProgressBar progressBar;
-		private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.Label lblStatus;
 		private System.Windows.Forms.PictureBox pictureBox1;
 	}
 }

@@ -4,16 +4,18 @@ namespace NDtw.Preprocessing
 {
     public class NormalizationPreprocessor : IPreprocessor
     {
-        private readonly double _minBoundary;
         private readonly double _maxBoundary;
+        private readonly double _minBoundary;
 
         /// <summary>
-        /// Initialize to use normalization to range [0, 1]
+        ///     Initialize to use normalization to range [0, 1]
         /// </summary>
-        public NormalizationPreprocessor() : this (0, 1) { }
+        public NormalizationPreprocessor() : this(0, 1)
+        {
+        }
 
         /// <summary>
-        /// Initialize to use normalization to range [minBoundary, maxBoundary]
+        ///     Initialize to use normalization to range [minBoundary, maxBoundary]
         /// </summary>
         public NormalizationPreprocessor(double minBoundary, double maxBoundary)
         {
@@ -27,7 +29,7 @@ namespace NDtw.Preprocessing
 
             var min = data.Min();
             var max = data.Max();
-            var constFactor = (_maxBoundary - _minBoundary)/(max - min);
+            var constFactor = (_maxBoundary - _minBoundary) / (max - min);
 
             return data.Select(x => (x - min) * constFactor + _minBoundary).ToArray();
         }

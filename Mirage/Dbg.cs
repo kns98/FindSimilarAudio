@@ -23,41 +23,40 @@
  */
 
 using System;
-using System.IO;
 using System.Diagnostics;
 
 namespace Mirage
 {
-	public class Dbg
-	{
-		[Conditional("DEBUG")]
-		public static void WriteLine(String l, params object[] args)
-		{
-			Console.WriteLine (l, args);
-		}
+    public class Dbg
+    {
+        [Conditional("DEBUG")]
+        public static void WriteLine(string l, params object[] args)
+        {
+            Console.WriteLine(l, args);
+        }
 
-		[Conditional("DEBUG")]
-		public static void Write(String l)
-		{
-			Console.Write (l);
-		}
-	}
+        [Conditional("DEBUG")]
+        public static void Write(string l)
+        {
+            Console.Write(l);
+        }
+    }
 
-	public class DbgTimer
-	{
-		Stopwatch stopWatch;
+    public class DbgTimer
+    {
+        private Stopwatch stopWatch;
 
-		public void Start()
-		{
-			stopWatch = Stopwatch.StartNew();
-		}
+        public void Start()
+        {
+            stopWatch = Stopwatch.StartNew();
+        }
 
-		public TimeSpan Stop()
-		{
-			stopWatch.Stop();
-			
-			// Get the elapsed time as a TimeSpan value.
-			return stopWatch.Elapsed;
-		}
-	}
+        public TimeSpan Stop()
+        {
+            stopWatch.Stop();
+
+            // Get the elapsed time as a TimeSpan value.
+            return stopWatch.Elapsed;
+        }
+    }
 }

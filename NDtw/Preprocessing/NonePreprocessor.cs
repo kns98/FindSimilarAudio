@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace NDtw.Preprocessing
+﻿namespace NDtw.Preprocessing
 {
     public class NonePreprocessor : IPreprocessor
     {

@@ -1,88 +1,82 @@
 ﻿using System;
-using CommonUtils;
 using Comirva.Audio.Util.Maths;
 
 /// <summary>
-/// Discrete Cosine Transform using Comirva.
+///     Discrete Cosine Transform using Comirva.
 /// </summary>
 public class DctComirva
 {
-	private Matrix dctMatrix;
-	private int rows;
-	private int columns;
-	
-	public Matrix DCTMatrix {
-		get { return dctMatrix; }
-	}
-	
-	public DctComirva(int rows, int columns)
-	{
-		this.rows = rows;
-		this.columns = columns;
-		
-		// Compute the DCT
-		// This whole section is copied from GetDCTMatrix() from CoMirva package
-		dctMatrix = new Matrix(rows, columns);
-		
-		// Compute constants for DCT
-		// http://unix4lyfe.org/dct/
-		double k1 = Math.PI/columns;
-		double w1 = 1.0/(Math.Sqrt(columns));
-		double w2 = Math.Sqrt(2.0/columns);
+    private readonly int columns;
+    private readonly int rows;
 
-		// Generate 1D DCT-II matrix
-		for(int i = 0; i < rows; i++) {
-			for(int j = 0; j < columns; j++) {
-				if(i == 0)
-					dctMatrix.Set(i, j, w1 * Math.Cos(k1*i*(j + 0.5d)));
-				else
-					dctMatrix.Set(i, j, w2 * Math.Cos(k1*i*(j + 0.5d)));
-			}
-		}
-	}
-	
-	public double[][] dct(double[][] f)
-	{
-		// convert two dimensional data to a Comirva Matrix
-		Matrix mat = new Matrix(f, rows, columns);
-		#if DEBUG
-		mat.WriteText("dct-before.txt");
-		#endif
-		
-		// Perform the DCT (Discrete Cosine Transform)
-		Matrix dctResult = dctMatrix * mat;
-		
-		#if DEBUG
-		dctResult.WriteText("dct-after.txt");
-		#endif
+    public DctComirva(int rows, int columns)
+    {
+        this.rows = rows;
+        this.columns = columns;
 
-		// return as two dimensional array
-		return dctResult.MatrixData;
-	}
-	
-	public double[][] idct(double[][] F)
-	{
-		// convert two dimensional data to a Comirva Matrix
-		Matrix mat = new Matrix(F, rows, columns);
-		#if DEBUG
-		mat.WriteText("idct-before.txt");
-		#endif
+        // Compute the DCT
+        // This whole section is copied from GetDCTMatrix() from CoMirva package
+        DCTMatrix = new Matrix(rows, columns);
 
-		// Perform the IDCT (Inverse Discrete Cosine Transform)
-		Matrix iDctResult = dctMatrix.Transpose() * mat;
-		
-		#if DEBUG
-		iDctResult.WriteText("idct-after.txt");
-		#endif
+        // Compute constants for DCT
+        // http://unix4lyfe.org/dct/
+        var k1 = Math.PI / columns;
+        var w1 = 1.0 / Math.Sqrt(columns);
+        var w2 = Math.Sqrt(2.0 / columns);
 
-		// return as two dimensional array
-		return iDctResult.MatrixData;
-	}
-	
-	#region Testing Methods
-	
-	// Test the methods
-	/*
+        // Generate 1D DCT-II matrix
+        for (var i = 0; i < rows; i++)
+        for (var j = 0; j < columns; j++)
+            if (i == 0)
+                DCTMatrix.Set(i, j, w1 * Math.Cos(k1 * i * (j + 0.5d)));
+            else
+                DCTMatrix.Set(i, j, w2 * Math.Cos(k1 * i * (j + 0.5d)));
+    }
+
+    public Matrix DCTMatrix { get; }
+
+    public double[][] dct(double[][] f)
+    {
+        // convert two dimensional data to a Comirva Matrix
+        var mat = new Matrix(f, rows, columns);
+#if DEBUG
+        mat.WriteText("dct-before.txt");
+#endif
+
+        // Perform the DCT (Discrete Cosine Transform)
+        var dctResult = DCTMatrix * mat;
+
+#if DEBUG
+        dctResult.WriteText("dct-after.txt");
+#endif
+
+        // return as two dimensional array
+        return dctResult.MatrixData;
+    }
+
+    public double[][] idct(double[][] F)
+    {
+        // convert two dimensional data to a Comirva Matrix
+        var mat = new Matrix(F, rows, columns);
+#if DEBUG
+        mat.WriteText("idct-before.txt");
+#endif
+
+        // Perform the IDCT (Inverse Discrete Cosine Transform)
+        var iDctResult = DCTMatrix.Transpose() * mat;
+
+#if DEBUG
+        iDctResult.WriteText("idct-after.txt");
+#endif
+
+        // return as two dimensional array
+        return iDctResult.MatrixData;
+    }
+
+    #region Testing Methods
+
+    // Test the methods
+    /*
 z = [139 144 149 153 155 155 155 155;
 144 151 153 156 159 156 156 156;
 150 155 160 163 158 156 156 156;
@@ -113,30 +107,33 @@ ans =
          161         161         161         161         160         157         157         157
          162         162         161         163         162         157         157         157
          162         162         161         161         163         158         158         158
-	 */
-	public static void test() {
-		double[][] vals = new double[][] {
-			new double[] { 139.0, 144.0, 149.0, 153.0, 155.0, 155.0, 155.0, 155.0 },
-			new double[] { 144.0, 151.0, 153.0, 156.0, 159.0, 156.0, 156.0, 156.0 },
-			new double[] { 150.0, 155.0, 160.0, 163.0, 158.0, 156.0, 156.0, 156.0 },
-			new double[] { 159.0, 161.0, 162.0, 160.0, 160.0, 159.0, 159.0, 159.0 },
-			new double[] { 159.0, 160.0, 161.0, 162.0, 162.0, 155.0, 155.0, 155.0 },
-			new double[] { 161.0, 161.0, 161.0, 161.0, 160.0, 157.0, 157.0, 157.0 },
-			new double[] { 162.0, 162.0, 161.0, 163.0, 162.0, 157.0, 157.0, 157.0 },
-			new double[] { 162.0, 162.0, 161.0, 161.0, 163.0, 158.0, 158.0, 158.0 } };
-		
-		DctMethods.PrintMatrix(vals);
-		
-		DctComirva dctCom = new DctComirva(vals.Length, vals[0].Length);
-		
-		// dct
-		double[][] dctVals = dctCom.dct(vals);
-		DctMethods.PrintMatrix(dctVals);
-		
-		// idct
-		double[][] idctVals = dctCom.idct(dctVals);
-		DctMethods.PrintMatrix(idctVals);
-	}
-	#endregion
-	
+     */
+    public static void test()
+    {
+        double[][] vals =
+        {
+            new[] { 139.0, 144.0, 149.0, 153.0, 155.0, 155.0, 155.0, 155.0 },
+            new[] { 144.0, 151.0, 153.0, 156.0, 159.0, 156.0, 156.0, 156.0 },
+            new[] { 150.0, 155.0, 160.0, 163.0, 158.0, 156.0, 156.0, 156.0 },
+            new[] { 159.0, 161.0, 162.0, 160.0, 160.0, 159.0, 159.0, 159.0 },
+            new[] { 159.0, 160.0, 161.0, 162.0, 162.0, 155.0, 155.0, 155.0 },
+            new[] { 161.0, 161.0, 161.0, 161.0, 160.0, 157.0, 157.0, 157.0 },
+            new[] { 162.0, 162.0, 161.0, 163.0, 162.0, 157.0, 157.0, 157.0 },
+            new[] { 162.0, 162.0, 161.0, 161.0, 163.0, 158.0, 158.0, 158.0 }
+        };
+
+        DctMethods.PrintMatrix(vals);
+
+        var dctCom = new DctComirva(vals.Length, vals[0].Length);
+
+        // dct
+        var dctVals = dctCom.dct(vals);
+        DctMethods.PrintMatrix(dctVals);
+
+        // idct
+        var idctVals = dctCom.idct(dctVals);
+        DctMethods.PrintMatrix(idctVals);
+    }
+
+    #endregion
 }

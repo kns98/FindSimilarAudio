@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -17,68 +16,70 @@ using System.Collections.Generic;
  */
 namespace Aquila
 {
-	/**
+    /**
 	 * An ecapsulation of a single frame of the signal.
 	 */
-	public class Frame : IEnumerable<short>
-	{
-		/**
-		 * First and last sample of this frame in the data array/vector.
-		 */
-		private int _begin;
-		private int _end;
-
-		/**
+    public class Frame : IEnumerable<short>
+    {
+        /**
 		 * A const reference to signal source (audio channel).
 		 */
-		private readonly List<short> sourceChannel;
-		
-		/**
-		 * Creates the frame object - sets signal source and frame boundaries.
-		 *
-		 * Frame should not change original data, so the source is a const
-		 * reference.
-		 *
-		 * @param source const reference to signal source
-		 * @param indexBegin position of first sample of this frame in the source
-		 * @param indexEnd position of last sample of this frame in the source
-		 */
-		public Frame(List<short> source, int indexBegin, int indexEnd)
-		{
-			_begin = indexBegin;
-			_end = indexEnd;
-			sourceChannel = source;
-		}
-		
-		/**
-		 * Returns the frame length.
-		 *
-		 * @return frame length as a number of samples
-		 */
-		public int GetLength()
-		{
-			return _end - _begin;
-		}
+        private readonly List<short> sourceChannel;
 
-		/**
+        /**
+		 * First and last sample of this frame in the data array/vector.
+		 */
+        private readonly int _begin;
+
+        private readonly int _end;
+
+        /**
+         * Creates the frame object - sets signal source and frame boundaries.
+         * 
+         * Frame should not change original data, so the source is a const
+         * reference.
+         * 
+         * @param source const reference to signal source
+         * @param indexBegin position of first sample of this frame in the source
+         * @param indexEnd position of last sample of this frame in the source
+         */
+        public Frame(List<short> source, int indexBegin, int indexEnd)
+        {
+            _begin = indexBegin;
+            _end = indexEnd;
+            sourceChannel = source;
+        }
+
+        /**
 		 * Returns an iterator pointing to the first sample in the frame.
 		 */
-		public IEnumerator<short> GetEnumerator()
-		{
-			return GetFrameList().GetEnumerator();
-		}
+        public IEnumerator<short> GetEnumerator()
+        {
+            return GetFrameList().GetEnumerator();
+        }
 
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
-		}
-		
-		/// <summary>
-		/// Returns frame
-		/// </summary>
-		/// <returns></returns>
-		private List<short> GetFrameList() {
-			return sourceChannel.GetRange(_begin, GetLength());
-		}
-	}
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        /**
+         * Returns the frame length.
+         * 
+         * @return frame length as a number of samples
+         */
+        public int GetLength()
+        {
+            return _end - _begin;
+        }
+
+        /// <summary>
+        ///     Returns frame
+        /// </summary>
+        /// <returns></returns>
+        private List<short> GetFrameList()
+        {
+            return sourceChannel.GetRange(_begin, GetLength());
+        }
+    }
 }

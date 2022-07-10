@@ -7,40 +7,36 @@
 // Blog : http://ganeshtiwaridotcomdotnp.blogspot.com/
 namespace SpeechRecognitionHMM
 {
-	// performs Inverser Fourier Transform <br>
-	// we used Dct because there is only real coeffs
-	// 
-	// @author Ganesh Tiwari
-	public class DCT
-	{
-		// number of mfcc coeffs
-		internal int numCepstra;
-		
-		// number of Mel Filters
-		internal int M;
+    // performs Inverser Fourier Transform <br>
+    // we used Dct because there is only real coeffs
+    // 
+    // @author Ganesh Tiwari
+    public class DCT
+    {
+        // number of Mel Filters
+        internal int M;
 
-		// @param len length of array, i.e., number of features
-		// @param M numbe of Mel Filters
-		// @return
-		public DCT(int numCepstra, int M)
-		{
-			this.numCepstra = numCepstra;
-			this.M = M;
-		}
+        // number of mfcc coeffs
+        internal int numCepstra;
 
-		public double[] PerformDCT(double[] y)
-		{
-			double[] cepc = new double[numCepstra];
-			
-			// perform DCT
-			for (int n = 1; n <= numCepstra; n++)
-			{
-				for (int i = 1; i <= M; i++)
-				{
-					cepc[n - 1] += y[i - 1] * Math.Cos(Math.PI * (n - 1) / M * (i - 0.5));
-				}
-			}
-			return cepc;
-		}
-	}
+        // @param len length of array, i.e., number of features
+        // @param M numbe of Mel Filters
+        // @return
+        public DCT(int numCepstra, int M)
+        {
+            this.numCepstra = numCepstra;
+            this.M = M;
+        }
+
+        public double[] PerformDCT(double[] y)
+        {
+            var cepc = new double[numCepstra];
+
+            // perform DCT
+            for (var n = 1; n <= numCepstra; n++)
+            for (var i = 1; i <= M; i++)
+                cepc[n - 1] += y[i - 1] * Math.Cos(Math.PI * (n - 1) / M * (i - 0.5));
+            return cepc;
+        }
+    }
 }

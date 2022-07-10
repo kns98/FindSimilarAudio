@@ -21,46 +21,28 @@
  * Boston, MA  02110-1301, USA.
  */
 
-using System;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-
 namespace Mirage
 {
-	/// <summary>
-	/// Utility class storing a cache and Configuration variables for the Scms
-	/// distance computation.
-	/// </summary>
-	public class ScmsConfiguration
-	{
-		private int dim;
-		private int covlen;
-		private float[] mdiff;
-		private float[] aicov;
+    /// <summary>
+    ///     Utility class storing a cache and Configuration variables for the Scms
+    ///     distance computation.
+    /// </summary>
+    public class ScmsConfiguration
+    {
+        public ScmsConfiguration(int dimension)
+        {
+            Dimension = dimension;
+            CovarianceLength = (Dimension * Dimension + Dimension) / 2;
+            MeanDiff = new float[Dimension];
+            AddInverseCovariance = new float[CovarianceLength];
+        }
 
-		public ScmsConfiguration(int dimension)
-		{
-			dim = dimension;
-			covlen = (dim*dim + dim)/2;
-			mdiff = new float[dim];
-			aicov = new float[covlen];
-		}
+        public int Dimension { get; }
 
-		public int Dimension {
-			get { return dim; }
-		}
+        public int CovarianceLength { get; }
 
-		public int CovarianceLength {
-			get { return covlen; }
-		}
+        public float[] AddInverseCovariance { get; }
 
-		public float [] AddInverseCovariance {
-			get { return aicov;  }
-		}
-
-		public float[] MeanDiff {
-			get {  return mdiff; }
-		}
-	}
+        public float[] MeanDiff { get; }
+    }
 }

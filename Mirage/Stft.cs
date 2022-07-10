@@ -21,59 +21,55 @@
  * Boston, MA  02110-1301, USA.
  */
 
-using System;
-using System.Diagnostics;
+
 
 // Heavily modified by perivar@nerseth.com
 namespace Mirage
 {
+    /// <summary>
+    ///     Class to perform a Short Time Fourier Transformation
+    /// </summary>
+    public class Stft
+    {
+        private readonly Fft fft;
+        private readonly int hopsize;
+        private readonly int winsize;
 
-	/// <summary>
-	/// Class to perform a Short Time Fourier Transformation
-	/// </summary>
-	public class Stft
-	{
-		int winsize;
-		int hopsize;
-		Fft fft;
-		
-		/// <summary>
-		/// Instantiate a new Stft Class
-		/// </summary>
-		/// <param name="winsize">FFT window size</param>
-		/// <param name="hopsize">Value to hop on to the next window (50% overlap is when hopsize is half of the window size)</param>
-		/// <param name="window">Window function to apply to every window processed</param>
-		public Stft(int winsize, int hopsize, IWindowFunction window)
-		{
-			this.winsize = winsize;
-			this.hopsize = hopsize;
-			fft = new Fft(winsize, window);
-		}
-		
-		/// <summary>
-		/// Apply the STFT on the audiodata
-		/// </summary>
-		/// <param name="audiodata">Audiodata to apply the STFT on</param>
-		/// <returns>A matrix with the result of the STFT</returns>
-		public Matrix Apply(float[] audiodata)
-		{
-			DbgTimer t = new DbgTimer();
-			t.Start();
-			
-			// calculate how many hops (bands) we have using the current overlap (hopsize)
-			int hops = (audiodata.Length - winsize)/ hopsize;
-			
-			// Create a Matrix with "winsize" Rows and "hops" Columns
-			// Matrix[Row, Column]
-			Matrix stft = new Matrix(winsize/2 +1, hops);
-			
-			for (int i = 0; i < hops; i++) {
-				fft.ComputeMirageMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
-			}
-			
-			Dbg.WriteLine("Stft (ComputeMirageMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
-			
-			return stft;
-		}
-	}
+        /// <summary>
+        ///     Instantiate a new Stft Class
+        /// </summary>
+        /// <param name="winsize">FFT window size</param>
+        /// <param name="hopsize">Value to hop on to the next window (50% overlap is when hopsize is half of the window size)</param>
+        /// <param name="window">Window function to apply to every window processed</param>
+        public Stft(int winsize, int hopsize, IWindowFunction window)
+        {
+            this.winsize = winsize;
+            this.hopsize = hopsize;
+            fft = new Fft(winsize, window);
+        }
+
+        /// <summary>
+        ///     Apply the STFT on the audiodata
+        /// </summary>
+        /// <param name="audiodata">Audiodata to apply the STFT on</param>
+        /// <returns>A matrix with the result of the STFT</returns>
+        public Matrix Apply(float[] audiodata)
+        {
+            var t = new DbgTimer();
+            t.Start();
+
+            // calculate how many hops (bands) we have using the current overlap (hopsize)
+            var hops = (audiodata.Length - winsize) / hopsize;
+
+            // Create a Matrix with "winsize" Rows and "hops" Columns
+            // Matrix[Row, Column]
+            var stft = new Matrix(winsize / 2 + 1, hops);
+
+            for (var i = 0; i < hops; i++) fft.ComputeMirageMatrixUsingFftw(ref stft, i, audiodata, i * hopsize);
+
+            Dbg.WriteLine("Stft (ComputeMirageMatrix) Execution Time: " + t.Stop().TotalMilliseconds + " ms");
+
+            return stft;
+        }
+    }
 }

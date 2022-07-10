@@ -1,8 +1,7 @@
 ﻿using System;
-using Comirva.Audio.Util.Maths;
 using CommonUtils;
-using System.IO;
-using System.Xml;
+using Mirage;
+using Matrix = Comirva.Audio.Util.Maths.Matrix;
 
 /// <summary>
 /// <b>Mel Frequency Cepstrum Coefficients - MFCCs</b>
@@ -32,464 +31,486 @@ using System.Xml;
 /// </summary>
 namespace Comirva.Audio
 {
-	public class MFCC
-	{
-		//general fields
-		protected int windowSize;
-		protected int hopSize;
-		protected float sampleRate;
-		protected double baseFreq;
+    public class MFCC
+    {
+        protected double baseFreq;
+        private double[] buffer;
+        public Matrix dctMatrix;
+        protected int hopSize;
 
-		//fields concerning the mel filter banks
-		protected double minFreq;
-		protected double maxFreq;
-		protected int numberFilters;
+        //implementation details
+        private double[] inputData;
+        protected double maxFreq;
+        public Matrix melFilterBanks;
 
-		//fields concerning the MFCCs settings
-		protected int numberCoefficients;
-		protected bool useFirstCoefficient;
+        //fields concerning the mel filter banks
+        protected double minFreq;
+        private FFT normalizedPowerFFT;
 
-		//implementation details
-		private double[] inputData;
-		private double[] buffer;
-		public Matrix dctMatrix;
-		public Matrix melFilterBanks;
-		private FFT normalizedPowerFFT;
+        //fields concerning the MFCCs settings
+        protected int numberCoefficients;
+        protected int numberFilters;
+        protected float sampleRate;
 
-		/// <summary>
-		/// Creates a new MFCC object with default window size of 512 for the given
-		/// sample rate. The overleap of the windows is fixed at 50 percent. The number
-		/// of coefficients is set to 20 and the first coefficient is in use. The
-		/// 40 mel-filters are place in the range from 20 to 16000 Hz.
-		/// </summary>
-		/// <param name="sampleRate">float sampes per second, must be greater than zero; not
-		///                         whole-numbered values get rounded</param>
-		/// <exception cref="">Exception raised if method contract is violated</exception>
-		public MFCC(float sampleRate)
-		{
-			Initialize(sampleRate, 512, 20, true, 20.0, 16000.0, 40);
-		}
+        protected bool useFirstCoefficient;
 
-		/// <summary>
-		/// Creates a new MFCC object. 40 mel-filters are place in the range from 20 to
-		/// 16000 Hz.
-		/// </summary>
-		/// <param name="sampleRate">float sampes per second, must be greater than zero; not
-		///                         wohle-numbered values get rounded</param>
-		/// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
-		/// <param name="numberCoefficients">int must be grate or equal to 1 and smaller than
-		///                               the number of filters</param>
-		/// <param name="useFirstCoefficient">boolean indicates whether the first coefficient
-		///                                    of the dct process should be used in the
-		///                                    mfcc feature vector or not</param>
-		/// <exception cref="">Exception raised if mehtod contract is violated</exception>
-		public MFCC(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient)
-		{
-			Initialize(sampleRate, windowSize, numberCoefficients, useFirstCoefficient, 20.0, 16000.0, 40);
-		}
+        //general fields
+        protected int windowSize;
 
-		/// <summary>
-		/// Creates a new MFCC object. 40 mel-filters are place in the range from 20 to
-		/// 16000 Hz.
-		/// </summary>
-		/// <param name="sampleRate">float sampes per second, must be greater than zero; not
-		///                         whole-numbered values get rounded</param>
-		/// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
-		/// <param name="numberCoefficients">int must be grate or equal to 1 and smaller than
-		///                               the number of filters</param>
-		/// <param name="useFirstCoefficient">boolean indicates whether the first coefficient
-		///                                    of the dct process should be used in the
-		///                                    mfcc feature vector or not</param>
-		/// <param name="minFreq">double start of the interval to place the mel-filters in</param>
-		/// <param name="maxFreq">double end of the interval to place the mel-filters in</param>
-		/// <param name="numberFilters">int number of mel-filters to place in the interval</param>
-		/// <exception cref="">Exception raised if mehtod contract is violated</exception>
-		public MFCC(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient, double minFreq, double maxFreq, int numberFilters)
-		{
-			Initialize(sampleRate, windowSize, numberCoefficients, useFirstCoefficient, minFreq, maxFreq, numberFilters);
-		}
-		
-		/// <summary>
-		/// Init the MFCC class
-		/// </summary>
-		/// <param name="sampleRate">float sampes per second, must be greater than zero; not
-		///                         whole-numbered values get rounded</param>
-		/// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
-		/// <param name="numberCoefficients">int must be grate or equal to 1 and smaller than
-		///                               the number of filters</param>
-		/// <param name="useFirstCoefficient">boolean indicates whether the first coefficient
-		///                                    of the dct process should be used in the
-		///                                    mfcc feature vector or not</param>
-		/// <param name="minFreq">double start of the interval to place the mel-filters in</param>
-		/// <param name="maxFreq">double end of the interval to place the mel-filters in</param>
-		/// <param name="numberFilters">int number of mel-filters to place in the interval</param>
-		private void Initialize(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient, double minFreq, double maxFreq, int numberFilters)
-		{
-			//check for correct window size
-			if(windowSize < 32)
-			{
-				throw new Exception("window size must be at least 32");
-			}
-			else
-			{
-				int i = 32;
-				while(i < windowSize && i < Int32.MaxValue)
-					i = i << 1;
+        /// <summary>
+        ///     Creates a new MFCC object with default window size of 512 for the given
+        ///     sample rate. The overleap of the windows is fixed at 50 percent. The number
+        ///     of coefficients is set to 20 and the first coefficient is in use. The
+        ///     40 mel-filters are place in the range from 20 to 16000 Hz.
+        /// </summary>
+        /// <param name="sampleRate">
+        ///     float sampes per second, must be greater than zero; not
+        ///     whole-numbered values get rounded
+        /// </param>
+        /// <exception cref="">Exception raised if method contract is violated</exception>
+        public MFCC(float sampleRate)
+        {
+            Initialize(sampleRate, 512, 20, true, 20.0, 16000.0, 40);
+        }
 
-				if(i != windowSize)
-					throw new Exception("window size must be 2^n");
-			}
+        /// <summary>
+        ///     Creates a new MFCC object. 40 mel-filters are place in the range from 20 to
+        ///     16000 Hz.
+        /// </summary>
+        /// <param name="sampleRate">
+        ///     float sampes per second, must be greater than zero; not
+        ///     wohle-numbered values get rounded
+        /// </param>
+        /// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
+        /// <param name="numberCoefficients">
+        ///     int must be grate or equal to 1 and smaller than
+        ///     the number of filters
+        /// </param>
+        /// <param name="useFirstCoefficient">
+        ///     boolean indicates whether the first coefficient
+        ///     of the dct process should be used in the
+        ///     mfcc feature vector or not
+        /// </param>
+        /// <exception cref="">Exception raised if mehtod contract is violated</exception>
+        public MFCC(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient)
+        {
+            Initialize(sampleRate, windowSize, numberCoefficients, useFirstCoefficient, 20.0, 16000.0, 40);
+        }
 
-			//check sample rate
-			sampleRate = (float)Math.Round(sampleRate);
-			if(sampleRate < 1)
-				throw new Exception("sample rate must be at least 1");
+        /// <summary>
+        ///     Creates a new MFCC object. 40 mel-filters are place in the range from 20 to
+        ///     16000 Hz.
+        /// </summary>
+        /// <param name="sampleRate">
+        ///     float sampes per second, must be greater than zero; not
+        ///     whole-numbered values get rounded
+        /// </param>
+        /// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
+        /// <param name="numberCoefficients">
+        ///     int must be grate or equal to 1 and smaller than
+        ///     the number of filters
+        /// </param>
+        /// <param name="useFirstCoefficient">
+        ///     boolean indicates whether the first coefficient
+        ///     of the dct process should be used in the
+        ///     mfcc feature vector or not
+        /// </param>
+        /// <param name="minFreq">double start of the interval to place the mel-filters in</param>
+        /// <param name="maxFreq">double end of the interval to place the mel-filters in</param>
+        /// <param name="numberFilters">int number of mel-filters to place in the interval</param>
+        /// <exception cref="">Exception raised if mehtod contract is violated</exception>
+        public MFCC(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient, double minFreq,
+            double maxFreq, int numberFilters)
+        {
+            Initialize(sampleRate, windowSize, numberCoefficients, useFirstCoefficient, minFreq, maxFreq,
+                numberFilters);
+        }
 
-			//check numberFilters
-			if(numberFilters < 2 || numberFilters > (windowSize/2) + 1)
-				throw new Exception("number filters must be at least 2 and smaller than the nyquist frequency");
+        /// <summary>
+        ///     Init the MFCC class
+        /// </summary>
+        /// <param name="sampleRate">
+        ///     float sampes per second, must be greater than zero; not
+        ///     whole-numbered values get rounded
+        /// </param>
+        /// <param name="windowSize">int size of window; must be 2^n and at least 32</param>
+        /// <param name="numberCoefficients">
+        ///     int must be grate or equal to 1 and smaller than
+        ///     the number of filters
+        /// </param>
+        /// <param name="useFirstCoefficient">
+        ///     boolean indicates whether the first coefficient
+        ///     of the dct process should be used in the
+        ///     mfcc feature vector or not
+        /// </param>
+        /// <param name="minFreq">double start of the interval to place the mel-filters in</param>
+        /// <param name="maxFreq">double end of the interval to place the mel-filters in</param>
+        /// <param name="numberFilters">int number of mel-filters to place in the interval</param>
+        private void Initialize(float sampleRate, int windowSize, int numberCoefficients, bool useFirstCoefficient,
+            double minFreq, double maxFreq, int numberFilters)
+        {
+            //check for correct window size
+            if (windowSize < 32) throw new Exception("window size must be at least 32");
 
-			//check numberCoefficients
-			if(numberCoefficients < 1 || numberCoefficients >= numberFilters)
-				throw new Exception("the number of coefficients must be greater or equal to 1 and samller than the number of filters");
+            var i = 32;
+            while (i < windowSize && i < int.MaxValue)
+                i = i << 1;
 
-			//check minFreq/maxFreq
-			if(minFreq <= 0 || minFreq > maxFreq || maxFreq > 88200.0f)
-				throw new Exception("the min. frequency must be greater 0 smaller than the max. frequency, which must be smaller than 88200.0");;
+            if (i != windowSize)
+                throw new Exception("window size must be 2^n");
 
-			this.sampleRate = sampleRate;
-			this.windowSize = windowSize;
-			this.hopSize = windowSize/2; //50% Overleap
-			this.baseFreq = sampleRate/windowSize;
+            //check sample rate
+            sampleRate = (float)Math.Round(sampleRate);
+            if (sampleRate < 1)
+                throw new Exception("sample rate must be at least 1");
 
-			this.numberCoefficients = numberCoefficients;
-			this.useFirstCoefficient = useFirstCoefficient;
+            //check numberFilters
+            if (numberFilters < 2 || numberFilters > windowSize / 2 + 1)
+                throw new Exception("number filters must be at least 2 and smaller than the nyquist frequency");
 
-			this.minFreq = minFreq;
-			this.maxFreq = maxFreq;
-			this.numberFilters = numberFilters;
+            //check numberCoefficients
+            if (numberCoefficients < 1 || numberCoefficients >= numberFilters)
+                throw new Exception(
+                    "the number of coefficients must be greater or equal to 1 and samller than the number of filters");
 
-			//create buffers
-			inputData = new double[windowSize];
-			buffer = new double[windowSize];
+            //check minFreq/maxFreq
+            if (minFreq <= 0 || minFreq > maxFreq || maxFreq > 88200.0f)
+                throw new Exception(
+                    "the min. frequency must be greater 0 smaller than the max. frequency, which must be smaller than 88200.0");
+            ;
 
-			//store filter weights and DCT matrix due to performance reason
-			melFilterBanks = GetMelFilterBanks();
-			#if DEBUG
-			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
-				melFilterBanks.DrawMatrixGraph("melfilters-comirva.png");
-			}
-			#endif
-			
-			dctMatrix = GetDCTMatrix();
-			#if DEBUG
-			if (Mirage.Analyzer.DEBUG_INFO_VERBOSE) {
-				dctMatrix.DrawMatrixGraph("dct-comirva.png");
-			}
-			#endif
+            this.sampleRate = sampleRate;
+            this.windowSize = windowSize;
+            hopSize = windowSize / 2; //50% Overleap
+            baseFreq = sampleRate / windowSize;
 
-			//create power fft object
-			normalizedPowerFFT = new FFT(FFT.FFT_NORMALIZED_POWER, windowSize, FFT.WND_HANNING);
-		}
+            this.numberCoefficients = numberCoefficients;
+            this.useFirstCoefficient = useFirstCoefficient;
 
-		/// <summary>
-		/// Returns the boundaries (start, center, end) of a given number of triangular
-		/// mel filters at linear scale. Mel-filters are triangular filters on the
-		/// linear scale with an integral (area) of 1. However they are placed
-		/// equidistantly on the mel scale, which is non-linear rather logarithmic.
-		/// The minimum linear frequency and the maximum linear frequency define the
-		/// mel-scaled interval to equidistantly place the filters.
-		/// Since mel-filters overlap, an array is used to efficiently store the
-		/// boundaries of a filter. For example you can get the boundaries of the k-th
-		/// filter by accessing the returned array as follows:
-		/// leftBoundary = boundaries[k-1];
-		/// center = boundaries[k];
-		/// rightBoundary = boundaries[k+1];
-		/// </summary>
-		/// <param name="minFreq">double frequency used for the left boundary of the first filter</param>
-		/// <param name="maxFreq">double frequency used for the right boundary of the last filter</param>
-		/// <param name="numberFilters">int number of filters to place within the interval [minFreq, maxFreq]</param>
-		/// <returns>double[] array countaining the boundaries</returns>
-		private double[] GetMelFilterBankBoundaries(double minFreq, double maxFreq, int numberFilters)
-		{
-			//create return array
-			double[] centers = new double[numberFilters + 2];
-			double maxFreqMel, minFreqMel, deltaFreqMel, nextCenterMel;
+            this.minFreq = minFreq;
+            this.maxFreq = maxFreq;
+            this.numberFilters = numberFilters;
 
-			//compute mel min./max. frequency
-			maxFreqMel = LinToMelFreq(maxFreq);
-			minFreqMel = LinToMelFreq(minFreq);
-			deltaFreqMel = (maxFreqMel - minFreqMel)/(numberFilters + 1);
+            //create buffers
+            inputData = new double[windowSize];
+            buffer = new double[windowSize];
 
-			//create (numberFilters + 2) equidistant points for the triangles
-			nextCenterMel = minFreqMel;
-			for(int i = 0; i < centers.Length; i++)
-			{
-				//transform the points back to linear scale
-				centers[i] = MelToLinFreq(nextCenterMel);
-				nextCenterMel += deltaFreqMel;
-			}
+            //store filter weights and DCT matrix due to performance reason
+            melFilterBanks = GetMelFilterBanks();
+#if DEBUG
+            if (Analyzer.DEBUG_INFO_VERBOSE) melFilterBanks.DrawMatrixGraph("melfilters-comirva.png");
+#endif
 
-			//ajust boundaries to exactly fit the given min./max. frequency
-			centers[0] = minFreq;
-			centers[numberFilters + 1] = maxFreq;
+            dctMatrix = GetDCTMatrix();
+#if DEBUG
+            if (Analyzer.DEBUG_INFO_VERBOSE) dctMatrix.DrawMatrixGraph("dct-comirva.png");
+#endif
 
-			return centers;
-		}
+            //create power fft object
+            normalizedPowerFFT = new FFT(FFT.FFT_NORMALIZED_POWER, windowSize, FFT.WND_HANNING);
+        }
 
-		/// <summary>
-		/// This method creats a matrix containing <code>numberFilters</code>
-		/// mel-filters. Each filter is represented by one row of this matrix. Thus all
-		/// the filters can be applied at once by a simple matrix multiplication.
-		/// </summary>
-		/// <returns>Matrix a matrix containing the filter banks</returns>
-		public Matrix GetMelFilterBanks()
-		{
-			//get boundaries of the different filters
-			double[] boundaries = GetMelFilterBankBoundaries(minFreq, maxFreq, numberFilters);
+        /// <summary>
+        ///     Returns the boundaries (start, center, end) of a given number of triangular
+        ///     mel filters at linear scale. Mel-filters are triangular filters on the
+        ///     linear scale with an integral (area) of 1. However they are placed
+        ///     equidistantly on the mel scale, which is non-linear rather logarithmic.
+        ///     The minimum linear frequency and the maximum linear frequency define the
+        ///     mel-scaled interval to equidistantly place the filters.
+        ///     Since mel-filters overlap, an array is used to efficiently store the
+        ///     boundaries of a filter. For example you can get the boundaries of the k-th
+        ///     filter by accessing the returned array as follows:
+        ///     leftBoundary = boundaries[k-1];
+        ///     center = boundaries[k];
+        ///     rightBoundary = boundaries[k+1];
+        /// </summary>
+        /// <param name="minFreq">double frequency used for the left boundary of the first filter</param>
+        /// <param name="maxFreq">double frequency used for the right boundary of the last filter</param>
+        /// <param name="numberFilters">int number of filters to place within the interval [minFreq, maxFreq]</param>
+        /// <returns>double[] array countaining the boundaries</returns>
+        private double[] GetMelFilterBankBoundaries(double minFreq, double maxFreq, int numberFilters)
+        {
+            //create return array
+            var centers = new double[numberFilters + 2];
+            double maxFreqMel, minFreqMel, deltaFreqMel, nextCenterMel;
 
-			//ignore filters outside of spectrum
-			for(int i = 1; i < boundaries.Length-1; i++)
-			{
-				if(boundaries[i] > sampleRate/2 )
-				{
-					numberFilters = i-1;
-					break;
-				}
-			}
+            //compute mel min./max. frequency
+            maxFreqMel = LinToMelFreq(maxFreq);
+            minFreqMel = LinToMelFreq(minFreq);
+            deltaFreqMel = (maxFreqMel - minFreqMel) / (numberFilters + 1);
 
-			//create the filter bank matrix
-			double[][] matrix = new double[numberFilters][];
+            //create (numberFilters + 2) equidistant points for the triangles
+            nextCenterMel = minFreqMel;
+            for (var i = 0; i < centers.Length; i++)
+            {
+                //transform the points back to linear scale
+                centers[i] = MelToLinFreq(nextCenterMel);
+                nextCenterMel += deltaFreqMel;
+            }
 
-			//fill each row of the filter bank matrix with one triangular mel filter
-			for(int i = 1; i <= numberFilters; i++)
-			{
-				double[] filter = new double[(windowSize/2)+1];
+            //ajust boundaries to exactly fit the given min./max. frequency
+            centers[0] = minFreq;
+            centers[numberFilters + 1] = maxFreq;
 
-				//for each frequency of the fft
-				for(int j = 0; j < filter.Length; j++)
-				{
-					//compute the filter weight of the current triangular mel filter
-					double freq = baseFreq * j;
-					filter[j] = GetMelFilterWeight(i, freq, boundaries);
-				}
+            return centers;
+        }
 
-				//add the computed mel filter to the filter bank
-				matrix[i-1] = filter;
-			}
+        /// <summary>
+        ///     This method creats a matrix containing <code>numberFilters</code>
+        ///     mel-filters. Each filter is represented by one row of this matrix. Thus all
+        ///     the filters can be applied at once by a simple matrix multiplication.
+        /// </summary>
+        /// <returns>Matrix a matrix containing the filter banks</returns>
+        public Matrix GetMelFilterBanks()
+        {
+            //get boundaries of the different filters
+            var boundaries = GetMelFilterBankBoundaries(minFreq, maxFreq, numberFilters);
 
-			//return the filter bank
-			return new Matrix(matrix, numberFilters, (windowSize/2)+1);
-		}
+            //ignore filters outside of spectrum
+            for (var i = 1; i < boundaries.Length - 1; i++)
+                if (boundaries[i] > sampleRate / 2)
+                {
+                    numberFilters = i - 1;
+                    break;
+                }
 
-		/// <summary>
-		/// Returns the filter weight of a given mel filter at a given freqency.
-		/// Mel-filters are triangular filters on the linear scale with an integral
-		/// (area) of 1. However they are placed equidistantly on the mel scale, which
-		/// is non-linear rather logarithmic.
-		/// Consequently there are lots of high, thin filters at start of the linear
-		/// scale and rather few and flat filters at the end of the linear scale.
-		/// Since the start-, center- and end-points of the triangular mel-filters on
-		/// the linear scale are known, the weigths are computed using linear
-		/// interpolation.
-		/// </summary>
-		/// <param name="filterBank">int the number of the mel-filter, used to exract the
-		///                       boundaries of the filter from the array</param>
-		/// <param name="freq">double the frequency, at which the filter weight should be
-		///                       returned</param>
-		/// <param name="boundaries">double[] an array containing all the boundaries</param>
-		/// <returns>double the filter weight</returns>
-		private double GetMelFilterWeight(int filterBank, double freq, double[] boundaries)
-		{
-			//for most frequencies the filter weight is 0
-			double result = 0;
+            //create the filter bank matrix
+            var matrix = new double[numberFilters][];
 
-			//compute start- , center- and endpoint as well as the height of the filter
-			double start = boundaries[filterBank - 1];
-			double center = boundaries[filterBank];
-			double end = boundaries[filterBank + 1];
-			double height = 2.0d/(end - start);
+            //fill each row of the filter bank matrix with one triangular mel filter
+            for (var i = 1; i <= numberFilters; i++)
+            {
+                var filter = new double[windowSize / 2 + 1];
 
-			//is the frequency within the triangular part of the filter
-			if(freq >= start && freq <= end)
-			{
-				//depending on frequencys position within the triangle
-				if(freq < center)
-				{
-					//...use a ascending linear function
-					result = (freq - start) * (height/(center - start));
-				}
-				else
-				{
-					//..use a descending linear function
-					result = height + ((freq - center) * (-height/(end - center)));
-				}
-			}
+                //for each frequency of the fft
+                for (var j = 0; j < filter.Length; j++)
+                {
+                    //compute the filter weight of the current triangular mel filter
+                    var freq = baseFreq * j;
+                    filter[j] = GetMelFilterWeight(i, freq, boundaries);
+                }
 
-			return result;
-		}
+                //add the computed mel filter to the filter bank
+                matrix[i - 1] = filter;
+            }
 
-		/// <summary>
-		/// Compute mel frequency from linear frequency.
-		/// </summary>
-		/// <param name="inputFreq">the input frequency in linear scale</param>
-		/// <returns>the frequency in a mel scale</returns>
-		private double LinToMelFreq(double inputFreq)
-		{
-			return (2595.0 * (Math.Log(1.0 + inputFreq / 700.0) / Math.Log(10.0)));
-		}
+            //return the filter bank
+            return new Matrix(matrix, numberFilters, windowSize / 2 + 1);
+        }
 
-		/// <summary>
-		/// Compute linear frequency from mel frequency.
-		/// </summary>
-		/// <param name="inputFreq">the input frequency in mel scale</param>
-		/// <returns>the frequency in a linear scale</returns>
-		private double MelToLinFreq(double inputFreq)
-		{
-			return (700.0 * (Math.Pow(10.0, (inputFreq / 2595.0)) - 1.0));
-		}
+        /// <summary>
+        ///     Returns the filter weight of a given mel filter at a given freqency.
+        ///     Mel-filters are triangular filters on the linear scale with an integral
+        ///     (area) of 1. However they are placed equidistantly on the mel scale, which
+        ///     is non-linear rather logarithmic.
+        ///     Consequently there are lots of high, thin filters at start of the linear
+        ///     scale and rather few and flat filters at the end of the linear scale.
+        ///     Since the start-, center- and end-points of the triangular mel-filters on
+        ///     the linear scale are known, the weigths are computed using linear
+        ///     interpolation.
+        /// </summary>
+        /// <param name="filterBank">
+        ///     int the number of the mel-filter, used to exract the
+        ///     boundaries of the filter from the array
+        /// </param>
+        /// <param name="freq">
+        ///     double the frequency, at which the filter weight should be
+        ///     returned
+        /// </param>
+        /// <param name="boundaries">double[] an array containing all the boundaries</param>
+        /// <returns>double the filter weight</returns>
+        private double GetMelFilterWeight(int filterBank, double freq, double[] boundaries)
+        {
+            //for most frequencies the filter weight is 0
+            double result = 0;
 
-		/// <summary>
-		/// Generates the DCT matrix for the known number of filters (input vector) and
-		/// for the known number of used coefficients (output vector). Therfore the
-		/// DCT matrix has the dimensions (numberCoefficients x numberFilters).
-		/// If useFirstCoefficient is set to false the matrix dimensions are
-		/// (numberCoefficients-1 x numberFilters). This matrix is a submatrix of the
-		/// full matrix. Only the frist row is missing.
-		/// </summary>
-		/// <returns>Matrix the appropriate DCT matrix</returns>
-		public Matrix GetDCTMatrix()
-		{
-			//compute constants
-			double k = Math.PI/numberFilters;
-			double w1 = 1.0/(Math.Sqrt(numberFilters));
-			double w2 = Math.Sqrt(2.0/numberFilters);
+            //compute start- , center- and endpoint as well as the height of the filter
+            var start = boundaries[filterBank - 1];
+            var center = boundaries[filterBank];
+            var end = boundaries[filterBank + 1];
+            var height = 2.0d / (end - start);
 
-			//create new matrix
-			Matrix matrix = new Matrix(numberCoefficients, numberFilters);
+            //is the frequency within the triangular part of the filter
+            if (freq >= start && freq <= end)
+            {
+                //depending on frequencys position within the triangle
+                if (freq < center)
+                    //...use a ascending linear function
+                    result = (freq - start) * (height / (center - start));
+                else
+                    //..use a descending linear function
+                    result = height + (freq - center) * (-height / (end - center));
+            }
 
-			//generate dct matrix
-			for(int i = 0; i < numberCoefficients; i++)
-			{
-				for(int j = 0; j < numberFilters; j++)
-				{
-					if(i == 0)
-						matrix.Set(i, j, w1 * Math.Cos(k*i*(j + 0.5d)));
-					else
-						matrix.Set(i, j, w2 * Math.Cos(k*i*(j + 0.5d)));
-				}
-			}
+            return result;
+        }
 
-			//adjust index if we are using first coefficient
-			if(!useFirstCoefficient)
-				matrix = matrix.GetMatrix(1, numberCoefficients-1, 0, numberFilters-1);
+        /// <summary>
+        ///     Compute mel frequency from linear frequency.
+        /// </summary>
+        /// <param name="inputFreq">the input frequency in linear scale</param>
+        /// <returns>the frequency in a mel scale</returns>
+        private double LinToMelFreq(double inputFreq)
+        {
+            return 2595.0 * (Math.Log(1.0 + inputFreq / 700.0) / Math.Log(10.0));
+        }
 
-			return matrix;
-		}
-		
-		/// <summary>
-		/// Performs the transformation of the input data to MFCCs.
-		/// This is done by splitting the given data into windows and processing
-		/// each of these windows with processWindow().
-		/// </summary>
-		/// <param name="input">double[] input data is an array of samples, must be a multiple
-		///                       of the hop size, must not be a null value</param>
-		/// <returns>double[][] an array of arrays contains a double array of Sone value
-		///                    for each window</returns>
-		/// <exception cref="">IOException if there are any problems regarding the inputstream</exception>
-		/// <exception cref="">Exception raised if mehtod contract is violated</exception>
-		public double[][] Process(double[] input)
-		{
-			//check for null
-			if(input == null)
-				throw new Exception("input data must not be a null value");
+        /// <summary>
+        ///     Compute linear frequency from mel frequency.
+        /// </summary>
+        /// <param name="inputFreq">the input frequency in mel scale</param>
+        /// <returns>the frequency in a linear scale</returns>
+        private double MelToLinFreq(double inputFreq)
+        {
+            return 700.0 * (Math.Pow(10.0, inputFreq / 2595.0) - 1.0);
+        }
 
-			//check for correct array length
-			if ((input.Length % hopSize) != 0)
-			{
-				double l = (double) input.Length / hopSize;
-				l = MathUtils.RoundUp(l);
-				int lenNew = (int) l * hopSize;
-				Array.Resize<double>(ref input, lenNew);
-				//throw new Exception("Input data must be multiple of hop size (windowSize/2).");
-			}
+        /// <summary>
+        ///     Generates the DCT matrix for the known number of filters (input vector) and
+        ///     for the known number of used coefficients (output vector). Therfore the
+        ///     DCT matrix has the dimensions (numberCoefficients x numberFilters).
+        ///     If useFirstCoefficient is set to false the matrix dimensions are
+        ///     (numberCoefficients-1 x numberFilters). This matrix is a submatrix of the
+        ///     full matrix. Only the frist row is missing.
+        /// </summary>
+        /// <returns>Matrix the appropriate DCT matrix</returns>
+        public Matrix GetDCTMatrix()
+        {
+            //compute constants
+            var k = Math.PI / numberFilters;
+            var w1 = 1.0 / Math.Sqrt(numberFilters);
+            var w2 = Math.Sqrt(2.0 / numberFilters);
 
-			//create return array with appropriate size
-			int len = (input.Length/hopSize)-1;
-			double[][] mfcc = new double[len][];
-			for (int i = 0; i < len; i++) {
-				mfcc[i] = new double[numberCoefficients];
-			}
+            //create new matrix
+            var matrix = new Matrix(numberCoefficients, numberFilters);
 
-			//process each window of this audio segment
-			for(int i = 0, pos = 0; pos < input.Length - hopSize; i++, pos+=hopSize) {
-				mfcc[i] = ProcessWindow(input, pos);
-			}
+            //generate dct matrix
+            for (var i = 0; i < numberCoefficients; i++)
+            for (var j = 0; j < numberFilters; j++)
+                if (i == 0)
+                    matrix.Set(i, j, w1 * Math.Cos(k * i * (j + 0.5d)));
+                else
+                    matrix.Set(i, j, w2 * Math.Cos(k * i * (j + 0.5d)));
 
-			return mfcc;
-		}
+            //adjust index if we are using first coefficient
+            if (!useFirstCoefficient)
+                matrix = matrix.GetMatrix(1, numberCoefficients - 1, 0, numberFilters - 1);
 
-		/// <summary>
-		/// Returns the window size.
-		/// </summary>
-		/// <returns>int the window size in samples</returns>
-		public int GetWindowSize()
-		{
-			return windowSize;
-		}
+            return matrix;
+        }
 
-		/// <summary>
-		/// Transforms one window of MFCCs. The following steps are
-		/// performed: <br>
-		/// <br>
-		/// (1) normalized power fft with hanning window function<br>
-		/// (2) convert to Mel scale by applying a mel filter bank<br>
-		/// (3) convertion to db<br>
-		/// (4) finally a DCT is performed to get the mfcc<br>
-		///<br>
-		/// This process is mathematical identical with the process described in [1].
-		/// </summary>
-		/// <param name="window">double[] data to be converted, must contain enough data for
-		///                        one window</param>
-		/// <param name="start">int start index of the window data</param>
-		/// <returns>double[] the window representation in Sone</returns>
-		public double[] ProcessWindow(double[] window, int start)
-		{
-			//number of unique coefficients, and the rest are symmetrically redundant
-			int fftSize = (windowSize / 2) + 1;
+        /// <summary>
+        ///     Performs the transformation of the input data to MFCCs.
+        ///     This is done by splitting the given data into windows and processing
+        ///     each of these windows with processWindow().
+        /// </summary>
+        /// <param name="input">
+        ///     double[] input data is an array of samples, must be a multiple
+        ///     of the hop size, must not be a null value
+        /// </param>
+        /// <returns>
+        ///     double[][] an array of arrays contains a double array of Sone value
+        ///     for each window
+        /// </returns>
+        /// <exception cref="">IOException if there are any problems regarding the inputstream</exception>
+        /// <exception cref="">Exception raised if mehtod contract is violated</exception>
+        public double[][] Process(double[] input)
+        {
+            //check for null
+            if (input == null)
+                throw new Exception("input data must not be a null value");
 
-			//check start
-			if(start < 0)
-				throw new Exception("start must be a positive value");
+            //check for correct array length
+            if (input.Length % hopSize != 0)
+            {
+                var l = (double)input.Length / hopSize;
+                l = MathUtils.RoundUp(l);
+                var lenNew = (int)l * hopSize;
+                Array.Resize(ref input, lenNew);
+                //throw new Exception("Input data must be multiple of hop size (windowSize/2).");
+            }
 
-			//check window size
-			if(window == null || window.Length - start < windowSize)
-				throw new Exception("the given data array must not be a null value and must contain data for one window");
+            //create return array with appropriate size
+            var len = input.Length / hopSize - 1;
+            var mfcc = new double[len][];
+            for (var i = 0; i < len; i++) mfcc[i] = new double[numberCoefficients];
 
-			//just copy to buffer
-			for (int j = 0; j < windowSize; j++)
-				buffer[j] = window[j + start];
+            //process each window of this audio segment
+            for (int i = 0, pos = 0; pos < input.Length - hopSize; i++, pos += hopSize)
+                mfcc[i] = ProcessWindow(input, pos);
 
-			//perform power fft
-			normalizedPowerFFT.Transform(buffer, null);
+            return mfcc;
+        }
 
-			//use all coefficient up to the nequist frequency (ceil((fftSize+1)/2))
-			Matrix x = new Matrix(buffer, windowSize);
-			x = x.GetMatrix(0, fftSize-1, 0, 0); //fftSize-1 is the index of the nyquist frequency
+        /// <summary>
+        ///     Returns the window size.
+        /// </summary>
+        /// <returns>int the window size in samples</returns>
+        public int GetWindowSize()
+        {
+            return windowSize;
+        }
 
-			//apply mel filter banks
-			x = melFilterBanks.Times(x);
+        /// <summary>
+        ///     Transforms one window of MFCCs. The following steps are
+        ///     performed:
+        ///     <br>
+        ///         <br>
+        ///             (1) normalized power fft with hanning window function
+        ///             <br>
+        ///                 (2) convert to Mel scale by applying a mel filter bank
+        ///                 <br>
+        ///                     (3) convertion to db
+        ///                     <br>
+        ///                         (4) finally a DCT is performed to get the mfcc
+        ///                         <br>
+        ///                             <br>
+        ///                                 This process is mathematical identical with the process described in [1].
+        /// </summary>
+        /// <param name="window">
+        ///     double[] data to be converted, must contain enough data for
+        ///     one window
+        /// </param>
+        /// <param name="start">int start index of the window data</param>
+        /// <returns>double[] the window representation in Sone</returns>
+        public double[] ProcessWindow(double[] window, int start)
+        {
+            //number of unique coefficients, and the rest are symmetrically redundant
+            var fftSize = windowSize / 2 + 1;
 
-			//to db
-			double log10 = 10 * (1 / Math.Log(10)); // log for base 10 and scale by factor 10
-			x.ThrunkAtLowerBoundary(1);
-			x.LogEquals();
-			x.TimesEquals(log10);
+            //check start
+            if (start < 0)
+                throw new Exception("start must be a positive value");
 
-			//compute DCT
-			x = dctMatrix.Times(x);
+            //check window size
+            if (window == null || window.Length - start < windowSize)
+                throw new Exception(
+                    "the given data array must not be a null value and must contain data for one window");
 
-			return x.GetColumnPackedCopy();
-		}
-	}
+            //just copy to buffer
+            for (var j = 0; j < windowSize; j++)
+                buffer[j] = window[j + start];
+
+            //perform power fft
+            normalizedPowerFFT.Transform(buffer, null);
+
+            //use all coefficient up to the nequist frequency (ceil((fftSize+1)/2))
+            var x = new Matrix(buffer, windowSize);
+            x = x.GetMatrix(0, fftSize - 1, 0, 0); //fftSize-1 is the index of the nyquist frequency
+
+            //apply mel filter banks
+            x = melFilterBanks.Times(x);
+
+            //to db
+            var log10 = 10 * (1 / Math.Log(10)); // log for base 10 and scale by factor 10
+            x.ThrunkAtLowerBoundary(1);
+            x.LogEquals();
+            x.TimesEquals(log10);
+
+            //compute DCT
+            x = dctMatrix.Times(x);
+
+            return x.GetColumnPackedCopy();
+        }
+    }
 }
